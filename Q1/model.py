@@ -319,7 +319,7 @@ class Gaussians:
         ### YOUR CODE HERE ###
         # HINT: Do note that means_2D have units of pixels. Hence, you must apply a
         # transformation that moves points in the world space to screen space.
-        means_2D = camera.transform_points_screen(means_3D)[...,0]  # (N, 2)
+        means_2D = camera.transform_points_screen(means_3D)[...,:2]  # (N, 2)
         return means_2D
 
     @staticmethod
@@ -368,7 +368,9 @@ class Gaussians:
         ### YOUR CODE HERE ###
         # HINT: Refer to README for a relevant equation
         x_centered = points_2D - means_2D
-        power = -0.5 * x_centered.permute(0, 2, 1) @ cov_2D_inverse @ x_centered  # (N, H*W)
+        # power = -0.5 * x_centered @ cov_2D_inverse @ x_centered.permute(0, 2, 1)  # (N, H*W)
+        power = -0.5 * ((x_centered @ cov_2D_inverse) * x_centered).sum(dim=-1)
+        # TODO: Speed this up later if possible, avoid creating
 
         return power
 
