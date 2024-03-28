@@ -370,7 +370,7 @@ class Gaussians:
         x_centered = points_2D - means_2D
         # power = -0.5 * x_centered @ cov_2D_inverse @ x_centered.permute(0, 2, 1)  # (N, H*W)
         power = -0.5 * ((x_centered @ cov_2D_inverse) * x_centered).sum(dim=-1)
-        # TODO: Speed this up later if possible, avoid creating
+        # TODO: Speed this up later if possible, avoid creating intermediate tensor
 
         return power
 
@@ -410,7 +410,10 @@ class Scene:
         ### YOUR CODE HERE ###
         # HINT: You can use get the means of 3D Gaussians self.gaussians and calculate
         # the depth using the means and the camera
-        z_vals = None  # (N,)
+        view_transform = camera.get_world_to_view_transform()
+        means_view_space = view_transform.transform_points(self.gaussians.means)
+
+        z_vals = means_view_space[:, 2] # (N,)
 
         return z_vals
 
@@ -431,7 +434,9 @@ class Scene:
         Please refer to the README file for more details.
         """
         ### YOUR CODE HERE ###
-        idxs = None  # (N,)
+        sorted, idxs = torch.sort(z_vals)  # (N,)
+        valid = sorted >= 0
+        idxs = idxs[valid]
 
         return idxs
 
