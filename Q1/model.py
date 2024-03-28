@@ -4,6 +4,7 @@ import numpy as np
 
 from typing import Tuple, Optional
 from pytorch3d.ops.knn import knn_points
+from pytorch3d.transforms import quaternion_to_matrix
 from pytorch3d.renderer.cameras import PerspectiveCameras
 from data_utils import load_gaussians_from_ply, colours_from_spherical_harmonics
 
@@ -238,13 +239,15 @@ class Gaussians:
         if self.is_isotropic:
 
             ### YOUR CODE HERE ###
-            cov_3D = None  # (N, 3, 3)
+            cov_3D = torch.eye(3).unsqueeze(0) * scales.unsqueeze(-1)  # (N, 3, 3)
 
         # HINT: You can use a function from pytorch3d to convert quaternions to rotation matrices.
         else:
 
             ### YOUR CODE HERE ###
-            cov_3D = None  # (N, 3, 3)
+            R = quaternion_to_matrix(quats)  # (N, 3, 3)
+            RS = R * scales.unsqueeze(-2) # (N, 3, 3)
+            cov_3D = RS @ RS.permute(0, 2, 1)
 
         return cov_3D
 
