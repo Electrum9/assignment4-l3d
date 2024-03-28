@@ -247,7 +247,7 @@ class Gaussians:
             ### YOUR CODE HERE ###
             R = quaternion_to_matrix(quats)  # (N, 3, 3)
             RS = R * scales.unsqueeze(-2) # (N, 3, 3)
-            cov_3D = RS @ RS.permute(0, 2, 1)
+            cov_3D = torch.matmul(RS, RS.permute(0, 2, 1))
 
         return cov_3D
 
@@ -274,20 +274,22 @@ class Gaussians:
         """
         ### YOUR CODE HERE ###
         # HINT: For computing the jacobian J, can you find a function in this file that can help?
-        J = None  # (N, 2, 3)
+        J = self._compute_jacobian(self.means, camera, img_size)  # (N, 2, 3)
 
         ### YOUR CODE HERE ###
         # HINT: Can you extract the world to camera rotation matrix (W) from one of the inputs
         # of this function?
-        W = None  # (N, 3, 3)
+        W = camera.get_world_to_view_transform().get_matrix()  # (N, 3, 3)
+        W = W[...,:3,:3]
 
         ### YOUR CODE HERE ###
         # HINT: Can you find a function in this file that can help?
-        cov_3D = None  # (N, 3, 3)
+        cov_3D = self.compute_cov_3D(quats, scales)  # (N, 3, 3)
 
         ### YOUR CODE HERE ###
         # HINT: Use the above three variables to compute cov_2D
-        cov_2D = None  # (N, 2, 2)
+        JW = J @ W # (N, 2, 2)
+        cov_2D = JW @ cov_3D @ JW.permute(0, 2, 1)
 
         # Post processing to make sure that each 2D Gaussian covers atleast approximately 1 pixel
         cov_2D[:, 0, 0] += 0.3
