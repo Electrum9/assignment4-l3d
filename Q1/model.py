@@ -158,7 +158,13 @@ class Gaussians:
         if camera.in_ndc():
             raise RuntimeError
 
-        fx, fy = camera.focal_length.flatten()
+        if camera.focal_length.shape[-1] == 1:
+            fx = camera.focal_length.flatten()
+            fy = fx
+        else:
+            fx, fy = camera.focal_length.flatten()
+            
+        # fx, fy = camera.focal_length.flatten()
         W, H = img_size
 
         half_tan_fov_x = 0.5 * W / fx
@@ -172,8 +178,8 @@ class Gaussians:
         tz = means_view_space[:, 2]
         tz2 = tz*tz
 
-        lim_x = 1.3 * half_tan_fov_x
-        lim_y = 1.3 * half_tan_fov_y
+        lim_x = (1.3 * half_tan_fov_x).item()
+        lim_y = (1.3 * half_tan_fov_y).item()
 
         tx = torch.clamp(tx/tz, -lim_x, lim_x) * tz
         ty = torch.clamp(ty/tz, -lim_y, lim_y) * tz
@@ -237,9 +243,8 @@ class Gaussians:
         # HINT: Are quats ever used or optimized for isotropic gaussians? What will their value be?
         # Based on your answers, can you write a more efficient code for the isotropic case?
         if self.is_isotropic:
-
             ### YOUR CODE HERE ###
-            cov_3D = torch.eye(3).unsqueeze(0) * scales.unsqueeze(-1)  # (N, 3, 3)
+            cov_3D = torch.eye(3).unsqueeze(0) * torch.square(scales.unsqueeze(-1))  # (N, 3, 3)
 
         # HINT: You can use a function from pytorch3d to convert quaternions to rotation matrices.
         else:
@@ -274,7 +279,7 @@ class Gaussians:
         """
         ### YOUR CODE HERE ###
         # HINT: For computing the jacobian J, can you find a function in this file that can help?
-        J = self._compute_jacobian(self.means, camera, img_size)  # (N, 2, 3)
+        J = self._compute_jacobian(means_3D, camera, img_size)  # (N, 2, 3)
 
         ### YOUR CODE HERE ###
         # HINT: Can you extract the world to camera rotation matrix (W) from one of the inputs
@@ -362,7 +367,8 @@ class Gaussians:
         """
         ### YOUR CODE HERE ###
         # HINT: Refer to README for a relevant equation
-        power = None  # (N, H*W)
+        x_centered = points_2D - means_2D
+        power = -0.5 * x_centered.permute(0, 2, 1) @ cov_2D_inverse @ x_centered  # (N, H*W)
 
         return power
 
