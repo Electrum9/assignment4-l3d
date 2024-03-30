@@ -244,7 +244,7 @@ class Gaussians:
         # Based on your answers, can you write a more efficient code for the isotropic case?
         if self.is_isotropic:
             ### YOUR CODE HERE ###
-            cov_3D = torch.eye(3).unsqueeze(0) * torch.square(scales.unsqueeze(-1))  # (N, 3, 3)
+            cov_3D = torch.eye(3).unsqueeze(0).cuda() * torch.square(scales.unsqueeze(-1))  # (N, 3, 3)
 
         # HINT: You can use a function from pytorch3d to convert quaternions to rotation matrices.
         else:
