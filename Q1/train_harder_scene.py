@@ -41,13 +41,22 @@ def setup_optimizer(gaussians):
     # HINT: Consider reducing the learning rates for parameters that seem to vary too
     # fast with the default settings.
     # HINT: Consider setting different learning rates for different sets of parameters.
+    # Better params
+    parameters = [
+        {'params': [gaussians.pre_act_opacities], 'lr': 1e-2, "name": "opacities"},
+        {'params': [gaussians.pre_act_scales], 'lr': 1e-1, "name": "scales"},
+        {'params': [gaussians.colours], 'lr': 1e-1, "name": "colours"},
+        {'params': [gaussians.means], 'lr': 1e-2, "name": "means"},
+    ]
+
+    # Default Params
     parameters = [
         {'params': [gaussians.pre_act_opacities], 'lr': 0.01, "name": "opacities"},
         {'params': [gaussians.pre_act_scales], 'lr': 0.005, "name": "scales"},
         {'params': [gaussians.colours], 'lr': 0.0025, "name": "colours"},
         {'params': [gaussians.means], 'lr': 0.00016, "name": "means"},
     ]
-    optimizer = torch.optim.Adam(parameters, lr=0.0, eps=1e-15)
+    optimizer = torch.optim.Adam(parameters, lr=0.0)
 
     return optimizer
 
@@ -97,14 +106,16 @@ def run_training(args):
 
     # Init gaussians and scene
     gaussians = Gaussians(
-        num_points=10000, init_type="random",
-        device=args.device, isotropic=True
+        num_points=2000, init_type="random",
+        device=args.device, isotropic=False
     )
     scene = Scene(gaussians)
 
     # Making gaussians trainable and setting up optimizer
     make_trainable(gaussians)
     optimizer = setup_optimizer(gaussians)
+    # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda i: 0.1**(i/1000))
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=500)
 
     # Training loop
     viz_frames = []
@@ -129,19 +140,26 @@ def run_training(args):
         # HINT: camera is available above
         pred_img, pred_depth, pred_mask = scene.render(camera, 
                                 per_splat=args.gaussians_per_splat, 
-                                img_size=train_dataset.img_size,
+                                img_size=(128,128),
                                 bg_colour=(0.0,0.0,0.0),
                                )
 
         # Compute loss
         ### YOUR CODE HERE ###
         l1 = torch.nn.L1Loss()
-        loss = l1(pred_img, gt_img) + (1 - pym.ssim(pred_img.permute(2,0,1).unsqueeze(0), gt_img.permute(2,0,1).unsqueeze(0), data_range=1, size_average=True))
+        # loss = l1(pred_img, gt_img)
+        ssim = (1 - pym.ssim(pred_img.permute(2,0,1).unsqueeze(0), gt_img.permute(2,0,1).unsqueeze(0), data_range=1, size_average=True))
+        l1_loss = l1(pred_img, gt_img)
+        lam = 0.2 # lambda term in loss expression used in Gaussian Splatting paper
+        # loss = (1-lam)*l1_loss + lam*ssim
+        loss = l1_loss
 
         loss.backward()
         optimizer.step()
+        # scheduler.step()
         optimizer.zero_grad()
 
+        # print(f"[*] Itr: {itr:07d} | Loss: {loss:0.3f} | LR: {scheduler.get_last_lr()}")
         print(f"[*] Itr: {itr:07d} | Loss: {loss:0.3f}")
 
         if itr % args.viz_freq == 0:
@@ -177,7 +195,7 @@ def run_training(args):
             # HINT: camera is available above
             pred_img, pred_depth, pred_mask = scene.render(camera, 
                                     per_splat=args.gaussians_per_splat, 
-                                    img_size=val_dataset.img_size,
+                                    img_size=(128,128),
                                     bg_colour=(0.0,0.0,0.0),
                                    )
 
@@ -205,7 +223,11 @@ def run_training(args):
             # HINT: Set img_size to (128, 128)
             # HINT: Get per_splat from args.gaussians_per_splat
             # HINT: camera is available above
-            pred_img = None
+            pred_img, pred_depth, pred_mask = scene.render(camera, 
+                                    per_splat=args.gaussians_per_splat, 
+                                    img_size=(128,128),
+                                    bg_colour=(0.0,0.0,0.0),
+                                   )
 
             gt_npy = gt_img.detach().cpu().numpy()
             pred_npy = pred_img.detach().cpu().numpy()

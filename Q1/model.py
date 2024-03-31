@@ -131,7 +131,14 @@ class Gaussians:
         data = dict()
 
         # Initializing means randomly
-        data["means"] = torch.randn((num_points, 3)).to(torch.float32) * 0.2  # (N, 3)
+        # k = torch.Tensor([4,4,0.5]).unsqueeze(0)
+        # data["means"] = torch.rand((num_points, 3)).to(torch.float32) * k - k / 2 # (N, 3)
+
+        # k = torch.Tensor([0.6,0.6,0.2]).unsqueeze(0)
+        # data["means"] = torch.randn((num_points, 3)).to(torch.float32) * k
+
+        k = torch.Tensor([0.2,0.2,0.2]).unsqueeze(0)
+        data["means"] = torch.randn((num_points, 3)).to(torch.float32) * k
 
         # Initializing opacities such that all when sigmoid is applied to pre_act_opacities,
         # we will have a opacity value close to (but less than) 1.0
