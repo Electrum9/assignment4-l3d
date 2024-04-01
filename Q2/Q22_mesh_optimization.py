@@ -24,6 +24,7 @@ from utils import (
     seed_everything,
 )
 
+import bitsandbytes as bnb
 
 def optimize_mesh_texture(
     sds,
@@ -83,9 +84,11 @@ def optimize_mesh_texture(
     query_cameras = [] # optional
 
     # Step 4. Create optimizer training parameters
-    optimizer = torch.optim.AdamW(color_field.parameters(), lr=5e-4, weight_decay=0)
+    # optimizer = torch.optim.AdamW(color_field.parameters(), lr=5e-4, weight_decay=0)
+    optimizer = bnb.optim.Adam8bit(color_field.parameters(), lr=5e-4)
     total_iter = 2000
     scheduler = get_cosine_schedule_with_warmup(optimizer, 100, int(total_iter * 1.5))
+    scaler = torch.cuda.amp.GradScaler()
 
     # Step 5. Training loop to optimize the texture map
     loss_dict = {}
@@ -100,18 +103,33 @@ def optimize_mesh_texture(
 
         # Forward pass
         # Render a randomly sampled camera view to optimize in this iteration
-        rend = 
-        # Encode the rendered image to latents
-        latents = 
-        # Compute the loss
-        loss =
+        dist = torch.rand(1) * 3 + 3
+        # dist = 3
+        elev = 0
+        azim = torch.rand(1) * 360
+        # azim = 180
+        R, T = look_at_view_transform(dist, elev, azim)
+        cameras = FoVPerspectiveCameras(device=device, R=R, T=T)
 
+        # Place a point light in front of the cow.
+        # lights = PointLights(location=[[0, 0, -3]], device=device)
+        rend = renderer(mesh, cameras=cameras, lights=lights)
+        rend = rend[..., :3].permute(0,3,1,2)
 
+        with torch.cuda.amp.autocast(enabled=False):
+            # Encode the rendered image to latents
+            latents = sds.encode_imgs(rend)
+            # Compute the loss
+            loss = sds.sds_loss(latents,
+                                text_embeddings=embeddings['default'],
+                                text_embeddings_uncond=embeddings['uncond'])
 
         # Backward pass
-        loss.backward()
-        optimizer.step()
+        scaler.scale(loss).backward()
+        # optimizer.step()
+        scaler.step(optimizer)
         scheduler.step()
+        scaler.update()
 
         # clamping the latents to avoid over saturation
         latents.data = latents.data.clip(-1, 1)

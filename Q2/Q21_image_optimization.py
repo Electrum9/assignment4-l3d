@@ -50,7 +50,7 @@ def optimize_an_image(
             else:
                 loss = sds.sds_loss(latents,
                                     text_embeddings=embeddings['default'],
-                                    text_embeddings_uncond=embeddings['uncond'], guidance=1)
+                                    text_embeddings_uncond=embeddings['uncond'], guidance_scale=1)
 
             # Backward pass
             scaler.scale(loss).backward()
