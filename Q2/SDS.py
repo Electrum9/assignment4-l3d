@@ -117,7 +117,6 @@ class SDS:
         imgs = (imgs * 255).round()  # [0, 1] => [0, 255]
         return imgs[0]
 
-    @torch.autocast(device_type='cuda')
     def sds_loss(
         self,
         latents,
@@ -149,12 +148,13 @@ class SDS:
             device=self.device,
         )
 
-        noise = torch.randn_like(latents, device=self.device)
-        latent_model_input = torch.sqrt(self.alphas[t]) * latents + torch.sqrt(1 - self.alphas[t]) * noise
 
         # predict the noise residual with unet, NO grad!
         with torch.no_grad():
             ### YOUR CODE HERE ###
+            noise = torch.randn_like(latents, device=self.device)
+            # latent_model_input = torch.sqrt(self.alphas[t]) * latents + torch.sqrt(1 - self.alphas[t]) * noise
+            latent_model_input = self.scheduler.add_noise(latents, noise, t)
             pred_noise = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
 
             if text_embeddings_uncond is not None and guidance_scale != 1:
@@ -166,8 +166,8 @@ class SDS:
         w = 1 - self.alphas[t]
         ### YOUR CODE HERE ###
 
-        grad = w * (pred_noise - noise)
-        target = latents + grad
+        grad = grad_scale * w * (pred_noise - noise)
+        target = (latents - grad).detach()
 
         mse = torch.nn.MSELoss()
         loss = mse(latents, target)

@@ -34,22 +34,26 @@ def optimize_an_image(
     optimizer = torch.optim.AdamW([latents], lr=1e-1, weight_decay=0)
     total_iter = 2000
     scheduler = get_cosine_schedule_with_warmup(optimizer, 100, int(total_iter * 1.5))
+    scaler = torch.cuda.amp.GradScaler()
 
     # Step 4. Training loop to optimize the latents
     for i in tqdm(range(total_iter)):
         optimizer.zero_grad()
         # Forward pass to compute the loss
         
-        ### YOUR CODE HERE ###
-        if args.sds_guidance:
-            loss = sds.sds_loss(latents, embeddings['default'], embeddings['uncond'], args.sds_guidance)
-        else:
-            loss = sds.sds_loss(latents, embeddings['default'], embeddings['uncond'])
+        with torch.cuda.amp.autocast():
+            ### YOUR CODE HERE ###
+            if args.sds_guidance:
+                loss = sds.sds_loss(latents, embeddings['default'], embeddings['uncond'])
+            else:
+                loss = sds.sds_loss(latents, embeddings['default'], embeddings['uncond'], guidance=1)
 
-        # Backward pass
-        loss.backward()
-        optimizer.step()
-        scheduler.step()
+            # Backward pass
+            scaler.scale(loss).backward()
+            # optimizer.step()
+            scaler.step(optimizer)
+            scheduler.step()
+            scaler.update()
 
         # clamping the latents to avoid over saturation
         latents.data = latents.data.clip(-1, 1)
