@@ -84,11 +84,11 @@ def optimize_mesh_texture(
     query_cameras = [] # optional
 
     # Step 4. Create optimizer training parameters
-    # optimizer = torch.optim.AdamW(color_field.parameters(), lr=5e-4, weight_decay=0)
-    optimizer = bnb.optim.Adam8bit(color_field.parameters(), lr=5e-4)
+    optimizer = torch.optim.AdamW(color_field.parameters(), lr=5e-4, weight_decay=0)
+    # optimizer = bnb.optim.Adam8bit(color_field.parameters(), lr=5e-4)
     total_iter = 2000
     scheduler = get_cosine_schedule_with_warmup(optimizer, 100, int(total_iter * 1.5))
-    scaler = torch.cuda.amp.GradScaler()
+    # scaler = torch.cuda.amp.GradScaler()
 
     # Step 5. Training loop to optimize the texture map
     loss_dict = {}
@@ -125,11 +125,11 @@ def optimize_mesh_texture(
                                 text_embeddings_uncond=embeddings['uncond'])
 
         # Backward pass
-        scaler.scale(loss).backward()
-        # optimizer.step()
-        scaler.step(optimizer)
+        # scaler.scale(loss).backward()
+        optimizer.step()
+        # scaler.step(optimizer)
         scheduler.step()
-        scaler.update()
+        # scaler.update()
 
         # clamping the latents to avoid over saturation
         latents.data = latents.data.clip(-1, 1)
