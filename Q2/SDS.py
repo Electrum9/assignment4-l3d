@@ -158,18 +158,34 @@ class SDS:
             pred_noise = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
 
             if text_embeddings_uncond is not None and guidance_scale != 1:
-                pred_noise_text = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings_uncond).sample
+                pred_noise_uncond = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings_uncond).sample
                 ### YOUR CODE HERE ###
-                pred_noise = pred_noise + guidance_scale * (pred_noise_text - pred_noise)
+                pred_noise = pred_noise_uncond + guidance_scale * (pred_noise - pred_noise_uncond)
+            noise = torch.randn_like(latents, device=self.device)
+            # latent_model_input = torch.sqrt(self.alphas[t]) * latents + torch.sqrt(1 - self.alphas[t]) * noise
+            latent_model_input = self.scheduler.add_noise(latents, noise, t)
+
+            # if text_embeddings_uncond is not None and guidance_scale != 1:
+            #     latent_model_input = torch.cat([latent_model_input] * 2)
+            #     t = torch.cat([t] * 2)
+            #     text_embeddings = torch.cat([text_embeddings_uncond, text_embeddings])
+            #     pred_noise = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
+            #     ### YOUR CODE HERE ###
+            #     pred_noise_nocond, pred_noise_cond = pred_noise.chunk(2)
+            #     # pred_noise = pred_noise + guidance_scale * (pred_noise_text - pred_noise)
+            #     pred_noise = pred_noise_nocond + guidance_scale * (pred_noise_cond - pred_noise_nocond)
+            # else:
+            #     pred_noise = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
 
         # Compute SDS loss
         w = 1 - self.alphas[t]
+        w = w[:, None, None, None]
         ### YOUR CODE HERE ###
 
         grad = grad_scale * w * (pred_noise - noise)
         target = (latents - grad).detach()
 
-        mse = torch.nn.MSELoss()
-        loss = mse(latents, target)
+        mse = torch.nn.MSELoss(reduction='sum')
+        loss = 0.5 * mse(latents.float(), target) / latents.shape[0]
 
         return loss

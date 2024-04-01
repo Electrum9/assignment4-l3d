@@ -44,9 +44,13 @@ def optimize_an_image(
         with torch.cuda.amp.autocast():
             ### YOUR CODE HERE ###
             if args.sds_guidance:
-                loss = sds.sds_loss(latents, embeddings['default'], embeddings['uncond'])
+                loss = sds.sds_loss(latents,
+                                    text_embeddings=embeddings['default'],
+                                    text_embeddings_uncond=embeddings['uncond'])
             else:
-                loss = sds.sds_loss(latents, embeddings['default'], embeddings['uncond'], guidance=1)
+                loss = sds.sds_loss(latents,
+                                    text_embeddings=embeddings['default'],
+                                    text_embeddings_uncond=embeddings['uncond'], guidance=1)
 
             # Backward pass
             scaler.scale(loss).backward()
