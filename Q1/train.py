@@ -196,7 +196,11 @@ def run_training(args):
             # HINT: Get img_size from test_dataset
             # HINT: Get per_splat from args.gaussians_per_splat
             # HINT: camera is available above
-            pred_img = None
+            pred_img, pred_depth, pred_mask = scene.render(camera, 
+                                    per_splat=args.gaussians_per_splat, 
+                                    img_size=test_dataset.img_size,
+                                    bg_colour=(0.0,0.0,0.0),
+                                   )
 
             gt_npy = gt_img.detach().cpu().numpy()
             pred_npy = pred_img.detach().cpu().numpy()
