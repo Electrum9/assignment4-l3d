@@ -88,11 +88,18 @@ The output for a hamburger with no guidance:
 
 ![](./Q2/output/image/bad_corgi_optimized.png)
 
+## Mesh Optimization
+
+If we optimize the texture for a mesh using SDS loss, we obtain the following:
+
+![Textured mesh for the prompt "a black spotted holstein cow".](./Q2/output/mesh/a_black_spotted_holstein_cow/final_mesh.gif)
+
+![Textured mesh for the prompt "a striped cow".](./Q2/output/mesh/a_striped_cow/final_mesh.gif)
+
 ## NeRF Optimization
 
 If we render the depth images and RGB images for various prompts, we obtain:
 ![RGB images for the prompt "a standing corgi dog."]()
-
 
 ![RGB images for the prompt "a cat".](./Q2/output/nerf/a_cat/videos/rgb_ep_60.mp4){width=250px}
 
