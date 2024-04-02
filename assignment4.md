@@ -58,6 +58,10 @@ spherical.
 
 Above are the learning rates and scheduler used. The default Adam optimizer was used.
 
+Reducing the number of Gaussians to ~1000 also aided in the optimization, though adding a few more (around several 100 or so)
+didn't seem to affect the results much.
+
+
 ![Using the learning configuration for the easy scene.](./Q1/output/q1_harder_training_final_renders.gif)
 
 ![Using the custom learning configuration.](./Q1/output/q1_harder_training_final_renders_good.gif)
@@ -74,8 +78,22 @@ The optimized image output for several different prompts, with guidance:
 
 ![Output with the prompt "a hamburger".](./Q2/output/image/a_hamburger_good/output.png)
 
-![Output with the prompt "a standing corgi dog".](./Q2/output/image/a_corgi_dog/output.png)
+![Output with the prompt "a standing corgi dog".](./Q2/output/image/good_corgi_optimized.png)
 
-![Output with the prompt "a cat".](./Q2/output/image/a_cat/output.png)
+![Output with the prompt "a cat".](./Q2/output/image/a_cat.png)
 
-![Output with the prompt "a car".](./Q2/output/image/a_car/output.png)
+![Output with the prompt "a car".](./Q2/output/image/car.png)
+
+The output for a hamburger with no guidance:
+
+![](./Q2/output/image/bad_corgi_optimized.png)
+
+## NeRF Optimization
+
+If we render the depth images and RGB images for various prompts, we obtain:
+![RGB images for the prompt "a standing corgi dog."]()
+
+
+![RGB images for the prompt "a cat".](./Q2/output/nerf/a_cat/videos/rgb_ep_60.mp4){width=250px}
+
+![Depth images for the prompt "a cat".](./Q2/output/nerf/a_cat/videos/depth_ep_60.mp4){width=250px}

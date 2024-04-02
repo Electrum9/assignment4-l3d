@@ -35,6 +35,7 @@
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    scheduler <span class="op">=</span> torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda<span class="op">=</span><span class="kw">lambda</span> i: <span class="fl">0.1</span><span class="op">**</span>(i<span class="op">/</span><span class="dv">1000</span>))</span></code></pre></div>
 <p>Above are the learning rates and scheduler used. The default Adam optimizer was used.</p>
+<p>Reducing the number of Gaussians to ~1000 also aided in the optimization, though adding a few more (around several 100 or so) didn’t seem to affect the results much.</p>
 <figure>
 <img src="./Q1/output/q1_harder_training_final_renders.gif" alt="" /><figcaption>Using the learning configuration for the easy scene.</figcaption>
 </figure>
@@ -49,7 +50,26 @@
 </figure>
 <h1 id="diffusion-guided-optimization">Diffusion-guided Optimization</h1>
 <h2 id="sds-loss-image-optimization">SDS Loss + Image Optimization</h2>
-<p>The optimized image output for several different prompts:</p>
+<p>The optimized image output for several different prompts, with guidance:</p>
 <figure>
 <img src="./Q2/output/image/a_hamburger_good/output.png" alt="" /><figcaption>Output with the prompt “a hamburger”.</figcaption>
+</figure>
+<figure>
+<img src="./Q2/output/image/good_corgi_optimized.png" alt="" /><figcaption>Output with the prompt “a standing corgi dog”.</figcaption>
+</figure>
+<figure>
+<img src="./Q2/output/image/a_cat.png" alt="" /><figcaption>Output with the prompt “a cat”.</figcaption>
+</figure>
+<figure>
+<img src="./Q2/output/image/car.png" alt="" /><figcaption>Output with the prompt “a car”.</figcaption>
+</figure>
+<p>The output for a hamburger with no guidance:</p>
+<p><img src="./Q2/output/image/bad_corgi_optimized.png" /></p>
+<h2 id="nerf-optimization">NeRF Optimization</h2>
+<p>If we render the depth images and RGB images for various prompts, we obtain: <img src="" alt="RGB images for the prompt “a standing corgi dog.”" /></p>
+<figure>
+<video src="./Q2/output/nerf/a_cat/videos/rgb_ep_60.mp4" width="250" controls=""><a href="./Q2/output/nerf/a_cat/videos/rgb_ep_60.mp4"></a></video><figcaption>RGB images for the prompt “a cat”.</figcaption>
+</figure>
+<figure>
+<video src="./Q2/output/nerf/a_cat/videos/depth_ep_60.mp4" width="250" controls=""><a href="./Q2/output/nerf/a_cat/videos/depth_ep_60.mp4"></a></video><figcaption>Depth images for the prompt “a cat”.</figcaption>
 </figure>
