@@ -126,6 +126,7 @@ def optimize_mesh_texture(
 
         # Backward pass
         # scaler.scale(loss).backward()
+        loss.backward()
         optimizer.step()
         # scaler.step(optimizer)
         scheduler.step()
