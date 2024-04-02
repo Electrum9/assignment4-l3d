@@ -160,7 +160,14 @@ def optimize_nerf(
                 text_cond = embeddings["default"]
             else:
                 ### YOUR CODE HERE ###
-                text_cond = None
+                if 45 <= azimuth <= 135:
+                    text_cond = embeddings['front']
+                elif 135 <= abs(azimuth) <= 180:
+                    text_cond = embeddings['side']
+                elif 0 <= abs(azimuth) <= 45:
+                    text_cond = embeddings['side']
+                else:
+                    text_cond = embeddings['back']
 
   
             ### YOUR CODE HERE ###

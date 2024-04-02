@@ -1,0 +1,55 @@
+<h1 id="gaussian-splatting">Gaussian Splatting</h1>
+<h2 id="rendering">Rendering</h2>
+<figure>
+<img src="./Q1/output/q1_render_sled.gif" alt="" /><figcaption>Views of the provided scene represented by pre-trained 3D Gaussians.</figcaption>
+</figure>
+<h2 id="training-3d-gaussian-representations">Training 3D Gaussian Representations</h2>
+<p>For this question, only L1 loss is used. The following learning rates are used:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>    parameters <span class="op">=</span> [</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>        {<span class="st">&#39;params&#39;</span>: [gaussians.pre_act_opacities], <span class="st">&#39;lr&#39;</span>: <span class="fl">0.01</span>, <span class="st">&quot;name&quot;</span>: <span class="st">&quot;opacities&quot;</span>},</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>        {<span class="st">&#39;params&#39;</span>: [gaussians.pre_act_scales], <span class="st">&#39;lr&#39;</span>: <span class="fl">0.005</span>, <span class="st">&quot;name&quot;</span>: <span class="st">&quot;scales&quot;</span>},</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>        {<span class="st">&#39;params&#39;</span>: [gaussians.colours], <span class="st">&#39;lr&#39;</span>: <span class="fl">0.0025</span>, <span class="st">&quot;name&quot;</span>: <span class="st">&quot;colours&quot;</span>},</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>        {<span class="st">&#39;params&#39;</span>: [gaussians.means], <span class="st">&#39;lr&#39;</span>: <span class="fl">0.00016</span>, <span class="st">&quot;name&quot;</span>: <span class="st">&quot;means&quot;</span>},</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>    ]</span></code></pre></div>
+<p>The number of iterations used for training was ~400. The final PSNR was <span class="math inline">27.546</span>, and the Mean SSIM was <span class="math inline">0.931</span>.</p>
+<p>Below are the resultant GIFs:</p>
+<figure>
+<img src="./Q1/output/cow_turntable.gif" alt="" /><figcaption>Turntable view of cow.</figcaption>
+</figure>
+<figure>
+<img src="./Q1/output/q1_training_progress_cow.gif" width="500" alt="" /><figcaption>Training progress for cow.</figcaption>
+</figure>
+<h2 id="harder-scene">Harder Scene</h2>
+<p>Using the settings from last section, and training for 3000 iterations, we obtain a Mean PSNR or <span class="math inline">18.418</span> and a SSIM of <span class="math inline">0.664</span>.</p>
+<p>If we change the mean initialization, starting learning rates, incorporate an exponential learning rate scheduler, and incorporate an SSIM loss, we are able to achieve both higher PSNR of <span class="math inline">22.480</span> and higher SSIM of <span class="math inline">0.837</span>.</p>
+<p>Specifically, based on our rough understanding of the scene, we know that that most of the objects are small in terms of height – but they collectively cover a large planar region. Thus, initializing the means with an anisotropic Gaussian which has more variation along this planar region, and less along the perpendicular to this region (the vertical component of these objects), is a better initialization.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>        k <span class="op">=</span> torch.Tensor([<span class="fl">0.6</span>,<span class="fl">0.6</span>,<span class="fl">0.2</span>]).unsqueeze(<span class="dv">0</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>        data[<span class="st">&quot;means&quot;</span>] <span class="op">=</span> torch.randn((num_points, <span class="dv">3</span>)).to(torch.float32) <span class="op">*</span> k</span></code></pre></div>
+<p>Having a high learning rate initially, particularly for parameters like the <code>pre_act_scales</code>, helps in optimizing the Gaussians to fit to the scene – many of the objects can be approximated with one big Gaussian, as they are roughly spherical.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>    parameters <span class="op">=</span> [</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>        {<span class="st">&#39;params&#39;</span>: [gaussians.pre_act_opacities], <span class="st">&#39;lr&#39;</span>: <span class="fl">1e-2</span>, <span class="st">&quot;name&quot;</span>: <span class="st">&quot;opacities&quot;</span>},</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>        {<span class="st">&#39;params&#39;</span>: [gaussians.pre_act_scales], <span class="st">&#39;lr&#39;</span>: <span class="fl">1e-1</span>, <span class="st">&quot;name&quot;</span>: <span class="st">&quot;scales&quot;</span>},</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>        {<span class="st">&#39;params&#39;</span>: [gaussians.colours], <span class="st">&#39;lr&#39;</span>: <span class="fl">1e-1</span>, <span class="st">&quot;name&quot;</span>: <span class="st">&quot;colours&quot;</span>},</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>        {<span class="st">&#39;params&#39;</span>: [gaussians.means], <span class="st">&#39;lr&#39;</span>: <span class="fl">1e-2</span>, <span class="st">&quot;name&quot;</span>: <span class="st">&quot;means&quot;</span>},</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    ]</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    scheduler <span class="op">=</span> torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda<span class="op">=</span><span class="kw">lambda</span> i: <span class="fl">0.1</span><span class="op">**</span>(i<span class="op">/</span><span class="dv">1000</span>))</span></code></pre></div>
+<p>Above are the learning rates and scheduler used. The default Adam optimizer was used.</p>
+<figure>
+<img src="./Q1/output/q1_harder_training_final_renders.gif" alt="" /><figcaption>Using the learning configuration for the easy scene.</figcaption>
+</figure>
+<figure>
+<img src="./Q1/output/q1_harder_training_final_renders_good.gif" alt="" /><figcaption>Using the custom learning configuration.</figcaption>
+</figure>
+<figure>
+<img src="./Q1/output/q1_harder_training_progress.gif" width="500" alt="" /><figcaption>Training progress with default learning configuration.</figcaption>
+</figure>
+<figure>
+<img src="./Q1/output/q1_harder_training_progress_good.gif" width="500" alt="" /><figcaption>Training progress with the new learning configuration.</figcaption>
+</figure>
+<h1 id="diffusion-guided-optimization">Diffusion-guided Optimization</h1>
+<h2 id="sds-loss-image-optimization">SDS Loss + Image Optimization</h2>
+<p>The optimized image output for several different prompts:</p>
+<figure>
+<img src="./Q2/output/image/a_hamburger_good/output.png" alt="" /><figcaption>Output with the prompt “a hamburger”.</figcaption>
+</figure>
