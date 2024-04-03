@@ -99,8 +99,38 @@ If we optimize the texture for a mesh using SDS loss, we obtain the following:
 ## NeRF Optimization
 
 If we render the depth images and RGB images for various prompts, we obtain:
-![RGB images for the prompt "a standing corgi dog."]()
 
-![RGB images for the prompt "a cat".](./Q2/output/nerf/a_cat/videos/rgb_ep_60.mp4){width=250px}
+![RGB images for the prompt "a standing corgi dog."](./Q2/output/nerf/a_standing_corgi_dog/videos/rgb_ep_99.mp4){width=250px}
 
-![Depth images for the prompt "a cat".](./Q2/output/nerf/a_cat/videos/depth_ep_60.mp4){width=250px}
+![RGB images for the prompt "a hamburger"](./Q2/output/nerf/a_hamburger/videos/rgb_ep_99.mp4){width=250px}
+
+![RGB images for the prompt "a dinosaur wearing a top hat"](./Q2/output/nerf/a_dinosaur_wearing_a_top_hat/videos/rgb_ep_99.mp4){width=250px}
+
+![Depth images for the prompt "a standing corgi dog."](./Q2/output/nerf/a_standing_corgi_dog/videos/depth_ep_99.mp4){width=250px}
+
+![Depth images for the prompt "a hamburger"](./Q2/output/nerf/a_hamburger/videos/depth_ep_99.mp4){width=250px}
+
+![Depth images for the prompt "a dinosaur wearing a top hat"](./Q2/output/nerf/a_dinosaur_wearing_a_top_hat/videos/depth_ep_99.mp4){width=250px}
+
+As can be clearly seen, we have multiple front faces for the "standing corgi dog" and "dinosaur" objects.
+
+### View Dependence
+
+If we issue prompts which change depending on the view, we can condition the model to learn something more sensible,
+and mitigate the issue of learning a 3D model with multiple front faces. 
+
+Like in the DreamFusion paper, we simply take the camera azimuth, check what quadrant it falls in (i.e. 0 to 90 degrees
+is considered to be the "front" face, while -90 to -180 is considered the "back" face).
+
+Slightly different hyperparameter choices were chosen to get the results here -- for some reason, using the past 
+hyperparameter choices yielded significantly worse results in terms of color and even overall geometry, though they 
+too did not have an issue with multiple front faces.
+
+![RGB image for the prompt "a standing corgi dog".](./Q2/output/nerf_old/a_standing_corgi_dog/videos/rgb_ep_60.mp4){width=250px}
+
+![Depth image for the prompt "a standing corgi dog".](./Q2/output/nerf_old/a_standing_corgi_dog/videos/depth_ep_60.mp4){width=250px}
+
+![RGB image for the prompt "a cat".](./Q2/output/nerf_old/a_cat/videos/rgb_ep_60.mp4){width=250px}
+
+![Depth image for the prompt "a cat".](./Q2/output/nerf_old/a_cat/videos/depth_ep_99.mp4){width=250px}
+
